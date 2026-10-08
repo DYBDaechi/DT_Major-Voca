@@ -578,7 +578,8 @@ function gradeTest(){
 }
 function autoSubmit(v){
   const el=$("rAuto"); el.hidden=false; el.className="hint"; el.textContent="선생님께 자동 제출하는 중…";
-  const body=new URLSearchParams(); for(const k in FORM_FIELDS) body.append(FORM_FIELDS[k], v[k]||"");
+  if(!v.cls) v.cls = store.get("wm_grade","") || "-";
+  const body=new URLSearchParams(); for(const k in FORM_FIELDS) body.append(FORM_FIELDS[k], v[k]||"-");
   let done=false;
   const ok=()=>{ if(done) return; done=true; el.className="ok"; el.textContent="✓ 선생님께 자동 제출했어요. 확인톡도 보내 주세요."; };
   const fail=()=>{ if(done) return; done=true; el.className="err"; el.textContent="자동 제출이 안 됐어요. 아래 결과를 복사해서 꼭 카톡으로 보내 주세요."; };
