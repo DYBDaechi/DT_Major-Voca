@@ -287,7 +287,7 @@ pre.result{white-space:pre-wrap;font-family:var(--f-mono);font-size:13px;backgro
   </main>
 
   <!-- ============ TEACHER ============ -->
-  <main id="teacher" hidden></main><div hidden><div id="stats"></div><div id="stTotal"></div><div id="stOpen"></div><div id="stPass"></div><div id="gsGo"></div><div id="gsLast"></div><div id="gsMsg"></div><textarea id="tPaste"></textarea><div id="tPasteGo"></div><div id="tPasteMsg"></div><form id="addForm"></form><select id="aClass"></select><select id="aBook"></select><div id="aDaysLabel"></div><div id="aDays"></div><textarea id="aNames"></textarea><select id="aPass"></select><select id="aSec"></select><div id="aFirst"></div><div id="aGo"></div><div id="aErr"></div><div id="aOut"></div><div id="aMsg"></div><div id="aCopy"></div><select id="fClass"></select><div id="list"></div><div id="listEmpty"></div><div id="classList"></div><input id="suUrl"></input><div id="suSave"></div><input id="gsUrl"></input><div id="gsSave"></div><div id="gsOpen"></div></div>
+  <main id="teacher" hidden></main><div hidden><div id="stats"></div><div id="stTotal"></div><div id="stOpen"></div><div id="stPass"></div><div id="gsGo"></div><div id="gsLast"></div><div id="gsMsg"></div><textarea id="tPaste"></textarea><div id="tPasteGo"></div><div id="tPasteMsg"></div><form id="addForm"></form><select id="aClass"></select><select id="aBook"></select><div id="aDaysLabel"></div><div id="aDays"></div><div id="aDays2Wrap"></div><input id="aDays2"></input><textarea id="aNames"></textarea><select id="aPass"></select><select id="aSec"></select><div id="aFirst"></div><div id="aGo"></div><div id="aErr"></div><div id="aOut"></div><div id="aMsg"></div><div id="aCopy"></div><select id="fClass"></select><div id="list"></div><div id="listEmpty"></div><div id="classList"></div><input id="suUrl"></input><div id="suSave"></div><input id="gsUrl"></input><div id="gsSave"></div><div id="gsOpen"></div></div>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -352,6 +352,9 @@ function matchAns(inp, ans){
   const parts=t.split(/\s*,\s*/).filter(Boolean); return parts.length>1 && parts.every(x=>vars.has(x));
 }
 function isRight(w,a){ a=a||[]; return matchAns(a[0],w.en) && w.rel.every((r,k)=>matchAns(a[k+1],r[2])); }
+function partsOf(o){ return o.book==="mix" ? [["wm",o.days],["rs",o.days2||[]]] : [[o.book||"wm",o.days]]; }
+function labelOf(o){ return partsOf(o).map(([b,d])=>fullLabel(d,b)).join(" + "); }
+function wordsOf(o){ return partsOf(o).flatMap(([b,d])=>wordsFor(d,b)); }
 function slotsFor(days, book){ let n=0,r=0; for(const w of wordsFor(days, book)){ n++; r+=w.rel.length; } return {n,r}; }
 const ALL = (()=>{ const m=new Map(); for(const b of ["wm","rs"]) for(let d=1; d<=BOOKS[b].max; d++) wordsFor([d],b).forEach(w=>m.set(wkey(w),w)); return m; })();
 
@@ -361,6 +364,7 @@ function makeCode(days, pass, count, sec){ const ds=daysStr(days); const k=sec? 
 const KADJ = ["달달한","잘생긴","초록색","빨간","노란","파란","하얀","까만","분홍색","보라색","주황색","하늘색","금색","은색","무지개색","동그란","네모난","세모난","길쭉한","통통한","말랑한","폭신한","바삭한","쫄깃한","새콤한","짭짤한","고소한","매콤한","시원한","따뜻한","차가운","반짝이는","졸린","배고픈","신나는","행복한","용감한","씩씩한","귀여운","예쁜","멋진","똑똑한","느긋한","재빠른","느릿한","작은","커다란","조그만","수줍은","웃는","춤추는","노래하는","잠자는","날아가는","헤엄치는","달리는","점프하는","구르는","반가운","상냥한","다정한","엉뚱한","부지런한","깔끔한","포근한","촉촉한","투명한","단단한","부드러운","향긋한","싱싱한","깜찍한","든든한","활기찬","명랑한","차분한","신비한","우아한","튼튼한","날씬한","동글동글한","보송보송한","꼬마","아기","왕","슈퍼","행운의","마법의","우주","바다","기쁜","즐거운","순한","착한","힘센","빠른","조용한","시끌벅적한"];
 const KNOUN = ["새우","해마","당근","사과","바나나","딸기","포도","수박","참외","복숭아","감자","고구마","옥수수","토마토","오이","양파","버섯","호박","레몬","귤","체리","키위","망고","도토리","땅콩","쿠키","도넛","푸딩","젤리","사탕","마카롱","와플","김밥","만두","라면","피자","치즈","우유","고양이","강아지","토끼","햄스터","다람쥐","판다","코알라","펭귄","돌고래","고래","거북이","문어","오징어","해파리","불가사리","조개","꽃게","개구리","오리","병아리","부엉이","앵무새","기린","코끼리","사자","호랑이","여우","곰","양","고슴도치","수달","너구리","낙타","얼룩말","하마","공룡","별","구름","무지개","우산","풍선","연필","지우개","가방","모자","양말","장갑","로켓","기차","자전거","선인장","해바라기","참새","고등어","연어","북극곰","꿀벌","나비","무당벌레","달팽이"];
 const KNOUN_RS=["도서관","책갈피","공책","크레파스","물감","돋보기","망원경","나침반"];
+const KMIX=["도서관","책갈피","공책","크레파스","물감","돋보기","망원경","나침반","색연필","스케치북","필통","가위","풀","자석","클립","스탬프","메모지","칠판","분필","형광펜","볼펜","만년필","샤프","책가방","실내화","교과서","사전","지구본","화분","시계","액자","리본","단추","색종이","도장","편지"];
 const K_PASS=[80,90,95,100], K_SEC=[0,8,10,15,20];
 const K2_RANGES=(()=>{ const r=[]; for(let a=1;a<=8;a++) for(let b=a;b<=8;b++) r.push([a,b]); return r; })();
 const K2_M=KADJ.length*KNOUN_RS.length, K2_P=311, K2_K=57;
@@ -368,6 +372,12 @@ const K2_PINV=(()=>{ for(let x=1;x<K2_M;x++) if((x*K2_P)%K2_M===1) return x; })(
 const K_RANGES=(()=>{ const r=[]; for(let a=1;a<=50;a++) for(let b=a;b<=Math.min(50,a+9);b++) r.push([a,b]); return r; })();
 const K_M=KADJ.length*KNOUN.length, K_P=4271, K_K=1234;
 const K_PINV=(()=>{ let [a,m]=[K_P%K_M,K_M], [x0,x1]=[0,1]; let mm=m; while(a>1){ const q=Math.floor(a/mm); [a,mm]=[mm,a%mm]; [x0,x1]=[x1-q*x0,x0]; } return ((x1%K_M)+K_M)%K_M; })();
+function makeMixCode(wmDays, rsDays, pass, sec){
+  const base=makeKCode(wmDays,pass,sec,"wm"); if(!base) return null;
+  const a=rsDays[0], b=rsDays[rsDays.length-1]; if(rsDays.length!==b-a+1) return null;
+  const ri=K2_RANGES.findIndex(r=>r[0]===a&&r[1]===b); if(ri<0) return null;
+  return base+" "+KMIX[ri];
+}
 function makeKCode(days, pass, sec, book){
   const a=days[0], b=days[days.length-1];
   if(book==="rs"){
@@ -383,6 +393,17 @@ function makeKCode(days, pass, sec, book){
   const idx=(ri*K_PASS.length+pi)*K_SEC.length+si;
   const v=(idx*K_P+K_K)%K_M;
   return KADJ[Math.floor(v/KNOUN.length)]+" "+KNOUN[v%KNOUN.length];
+}
+function readMixCode(raw){
+  const t=(raw||"").replace(/\s/g,"");
+  for(let mi=0; mi<KMIX.length; mi++){
+    if(!t.endsWith(KMIX[mi]) || t.length===KMIX[mi].length) continue;
+    const head=t.slice(0, t.length-KMIX[mi].length);
+    const w=readKCode(head); if(!w || w.book!=="wm") continue;
+    const [a,b]=K2_RANGES[mi]; const d2=[]; for(let d=a; d<=b; d++) d2.push(d);
+    return {...w, book:"mix", days2:d2, code:w.code+" "+KMIX[mi]};
+  }
+  return null;
 }
 function readKCode(raw){
   const t=(raw||"").replace(/\s/g,"");
@@ -409,6 +430,7 @@ function readKCode(raw){
 }
 function readCode(raw){
   const k=readKCode(raw); if(k) return k;
+  const mx=readMixCode(raw); if(mx) return mx;
   const s=(raw||"").toUpperCase().replace(/\s/g,"").replace(/[–—]/g,"-");
   const m=s.match(/^WM-([0-9~,]+)-(\d{2,3})-(\d{1,2})(?:-(\d{1,2}))?-([A-Z0-9]{2})$/); if(!m) return null;
   const sec=m[4]? +m[4] : 0;
@@ -517,7 +539,7 @@ function startTest(words, opt){
   T={q:words, ans:words.map(w=>new Array(1+w.rel.length).fill("")), i:0, ...opt};
   if(opt.official && opt.sec){ const slots=words.reduce((s,w)=>s+1+w.rel.length,0); T.deadline=Date.now()+slots*opt.sec*1000; $("tTimer").hidden=false; tick(); timerId=setInterval(tick,500); }
   $("tTitle").textContent = opt.official ? "재시험" : "쓰기 연습";
-  $("tRange").textContent = opt.official ? `${fullLabel(opt.days,opt.book)} · 통과 ${opt.pass}%` : (opt.label||"");
+  $("tRange").textContent = opt.official ? `${labelOf(opt)} · 통과 ${opt.pass}%` : (opt.label||"");
   $("tConfirm").hidden=true; show("sTest"); drawTest();
 }
 function drawTest(){
@@ -571,8 +593,8 @@ function gradeTest(){
   const now=new Date(); const at=`${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
   const name=T.name;
   const vc=hash([name,T.code,right,total,at].join("|"),5);
-  const text=`[워드마스터 재시험 결과]\n이름: ${name}\n범위: ${fullLabel(T.days,T.book)}\n코드: ${T.code}\n점수: ${right}/${total} (${pct}%) ${passed?"통과":"미통과"}\n일시: ${at}\n확인: ${vc}`;
-  autoSubmit({name, cls:T.cls||"", range:fullLabel(T.days,T.book), code:T.code, score:`${right}/${total} (${pct}%) ${passed?"통과":"미통과"}`, at, vc});
+  const text=`[워드마스터 재시험 결과]\n이름: ${name}\n범위: ${labelOf(T)}\n코드: ${T.code}\n점수: ${right}/${total} (${pct}%) ${passed?"통과":"미통과"}\n일시: ${at}\n확인: ${vc}`;
+  autoSubmit({name, cls:T.cls||"", range:labelOf(T), code:T.code, score:`${right}/${total} (${pct}%) ${passed?"통과":"미통과"}`, at, vc});
   showResult({title:"재시험 결과", right, total, passed, wrong, text,
     note: passed ? "통과 기준을 넘었어요. 결과를 선생님께 보내면 끝!" : `통과 기준은 ${T.pass}%예요. 틀린 단어를 연습하고 같은 코드로 다시 볼 수 있어요. 이번 결과도 선생님께 보내 주세요.`});
 }
@@ -615,7 +637,7 @@ $("pSpell").onclick=()=>startTest(shuffle(selectedWords()), {official:false, lab
 $("wCards").onclick=()=>startCards(wrongList().map(e=>ALL.get(e)), "오답 카드");
 $("wSpell").onclick=()=>startTest(shuffle(wrongList().map(e=>ALL.get(e))), {official:false, label:"오답 노트"});
 
-$("sCode").addEventListener("input",()=>{ const c=readCode($("sCode").value), el=$("sCodeInfo"); if(!c){ el.hidden=true; return; } el.hidden=false; el.textContent=`${fullLabel(c.days,c.book)} · 통과 ${c.pass}% · `+limitText(c)+". 문제 순서는 볼 때마다 섞여요."; });
+$("sCode").addEventListener("input",()=>{ const c=readCode($("sCode").value), el=$("sCodeInfo"); if(!c){ el.hidden=true; return; } el.hidden=false; el.textContent=`${labelOf(c)} · 통과 ${c.pass}% · `+limitText(c)+". 문제 순서는 볼 때마다 섞여요."; });
 $("sStartTest").onclick=()=>{
   const name=$("sName").value.trim(), err=$("sErr"); err.hidden=true;
   if(!name){ err.textContent="이름을 먼저 써 주세요."; err.hidden=false; $("sName").focus(); return; }
@@ -626,8 +648,8 @@ $("sStartTest").onclick=()=>{
 };
 function beginOfficial(c){
   lastOfficial=c;
-  let words=shuffle(wordsFor(c.days, c.book)); if(c.count && c.count<words.length) words=words.slice(0,c.count);
-  startTest(words, {official:true, name:c.name, code:c.code, days:c.days, book:c.book||"wm", pass:c.pass, sec:c.sec, cls:linkCls});
+  let words=shuffle(wordsOf(c)); if(c.count && c.count<words.length) words=words.slice(0,c.count);
+  startTest(words, {official:true, name:c.name, code:c.code, days:c.days, days2:c.days2, book:c.book||"wm", pass:c.pass, sec:c.sec, cls:linkCls});
 }
 
 /* ================= TEACHER ================= */
@@ -639,7 +661,7 @@ tabs.student.onclick=()=>setTab("student"); tabs.teacher.onclick=()=>setTab("tea
 function attemptsOf(r){ return Array.isArray(r.attempts)? r.attempts : []; }
 function statusOf(r){ if(r.manualPass) return "pass"; const a=attemptsOf(r); if(a.some(x=>x.total && x.score/x.total*100 >= r.pass)) return "pass"; return a.length? "fail":"wait"; }
 const ST={pass:["pass","통과"], fail:["fail","재응시 필요"], wait:["wait","미응시"]};
-function limitText(r){ if(!r.sec) return "시간 제한 없음"; const {n,r:rc}=slotsFor(r.days, r.book||"wm"); return `제한 시간 ${fmtTime((n+rc)*r.sec)} (${n}문항${rc?` + 동·반의어 ${rc}칸`:""}, 칸당 ${r.sec}초) · 시간 안에 제출 못 하면 처음부터 다시`; }
+function limitText(r){ if(!r.sec) return "시간 제한 없음"; let n=0,rc=0; for(const w of wordsOf(r)){ n++; rc+=w.rel.length; } return `제한 시간 ${fmtTime((n+rc)*r.sec)} (${n}문항${rc?` + 동·반의어 ${rc}칸`:""}, 칸당 ${r.sec}초) · 시간 안에 제출 못 하면 처음부터 다시`; }
 function noticeTitle(cls){ cls=cls||""; if(/E5$/.test(cls)) return "E5 Hermes Voca 복습과제[재시험] 안내"; if(/M1$/.test(cls)) return "M1 Major Voca 복습과제[재시험] 안내"; return "Voca 복습과제[재시험] 안내"; }
 const FORM_URL="https://docs.google.com/forms/d/e/1FAIpQLSfID1MaBmAQTj6Bku5hzGHnKAdJrctREc9o0UK6hG5Gk86zCg/formResponse";
 const FORM_FIELDS={name:"entry.1036635173", cls:"entry.2039515947", range:"entry.1351378639", code:"entry.4556721", score:"entry.47966202", at:"entry.90218064", vc:"entry.1596331366"};
@@ -648,7 +670,7 @@ function sheetId(){ return store.get("wm_sheet_id", SHEET_ID_DEFAULT) || SHEET_I
 const STUDENT_URL_DEFAULT="https://dybdaechi.github.io/DT_Major-Voca/";
 function studentUrl(){ return store.get("wm_student_url", STUDENT_URL_DEFAULT) || STUDENT_URL_DEFAULT; }
 function linkFor(r){ const g=/E5$/.test(r.cls||"")? "E5" : "M1"; return studentUrl()+"?g="+g+"&k="+encodeURIComponent(r.cls||"")+"&c="+encodeURIComponent((r.code||"").replace(/\s/g,"")); }
-function noticeFor(r){ return `[${noticeTitle(r.cls)}]\n${r.name} 학생, 단어 재시험이 있어요.\n범위: ${fullLabel(r.days,r.book||"wm")} (통과 ${r.pass}% 이상)\n${limitText(r)}\n\n아래 링크를 누르면 바로 시험 화면으로 들어가요. 이름만 쓰고 시작하세요.\n${linkFor(r)}\n\n재시험 코드: ${r.code}\n\n시험이 끝나면 '결과 복사'를 눌러 선생님께 보내 주세요.`; }
+function noticeFor(r){ return `[${noticeTitle(r.cls)}]\n${r.name} 학생, 단어 재시험이 있어요.\n범위: ${labelOf(r)} (통과 ${r.pass}% 이상)\n${limitText(r)}\n\n아래 링크를 누르면 바로 시험 화면으로 들어가요. 이름만 쓰고 시작하세요.\n${linkFor(r)}\n\n재시험 코드: ${r.code}\n\n시험이 끝나면 '결과 복사'를 눌러 선생님께 보내 주세요.`; }
 
 function render(){
   const cls=$("fClass").value;
@@ -669,7 +691,7 @@ function itemEl(r){
   const el=document.createElement("div"); el.className="item";
   const h=document.createElement("button"); h.className="head"; h.type="button"; h.setAttribute("aria-expanded", openId===r.id);
   const nm=document.createElement("span"); nm.className="nm"; nm.textContent=r.name;
-  const meta=document.createElement("span"); meta.className="meta"; meta.textContent=[r.cls, fullLabel(r.days,r.book||"wm"), r.sec?`칸당 ${r.sec}초`:"", r.first?`1차 ${r.first}`:""].filter(Boolean).join(" · ");
+  const meta=document.createElement("span"); meta.className="meta"; meta.textContent=[r.cls, labelOf(r), r.sec?`칸당 ${r.sec}초`:"", r.first?`1차 ${r.first}`:""].filter(Boolean).join(" · ");
   const rt=document.createElement("span"); rt.className="right";
   rt.innerHTML=`<span class="pill ${ST[st][0]}">${ST[st][1]}</span>`;
   const ls=document.createElement("span"); ls.textContent= last? `${last.score}/${last.total} · ${a.length}회` : ""; rt.appendChild(ls);
@@ -703,20 +725,23 @@ async function addAttempt(r, at){ const a=attemptsOf(r).map(x=>({...x})); a.push
 document.querySelectorAll(".chip[data-f]").forEach(c=>c.onclick=()=>{ filt=c.dataset.f; document.querySelectorAll(".chip[data-f]").forEach(x=>x.setAttribute("aria-pressed",x===c)); render(); });
 $("fClass").onchange=render;
 
-$("aBook").onchange=()=>{ const rs=$("aBook").value==="rs"; $("aDaysLabel").textContent= rs? "Unit 범위":"Day 범위"; $("aDays").placeholder= rs? "예: 1~2 (Unit 1~8)" : "예: 3~4 (이어진 10일 이내)"; };
+$("aBook").onchange=()=>{ const v=$("aBook").value, rs=v==="rs"; $("aDaysLabel").textContent= rs? "Unit 범위" : v==="mix" ? "Word Master Day 범위" : "Day 범위"; $("aDays").placeholder= rs? "예: 1~2 (Unit 1~8)" : "예: 3~4 (이어진 10일 이내)"; $("aDays2Wrap").hidden = v!=="mix"; };
 $("addForm").addEventListener("submit", async e=>{
   e.preventDefault(); const err=$("aErr"); err.hidden=true; $("aOut").hidden=true;
   const days=parseDays($("aDays").value); const names=$("aNames").value.split(/[,\n、]/).map(s=>s.trim()).filter(Boolean);
-  const book=$("aBook").value, B=BOOKS[book];
-  if(!days || days.length!==days[days.length-1]-days[0]+1 || days.length>B.maxSpan || days[days.length-1]>B.max){ err.textContent= book==="rs" ? "Unit 범위는 1~8 사이에서 이어지게 써 주세요. (예: 1~2)" : "Day 범위는 1~50 사이에서 이어진 10일 이내로 써 주세요. (예: 3~4, 11~15)"; err.hidden=false; return; }
+  const book=$("aBook").value, B=BOOKS[book==="mix"?"wm":book];
+  const okRange=(d,BB)=> d && d.length===d[d.length-1]-d[0]+1 && d.length<=BB.maxSpan && d[d.length-1]<=BB.max;
+  if(!okRange(days,B)){ err.textContent= book==="rs" ? "Unit 범위는 1~8 사이에서 이어지게 써 주세요. (예: 1~2)" : "Day 범위는 1~50 사이에서 이어진 10일 이내로 써 주세요. (예: 3~4, 11~15)"; err.hidden=false; return; }
+  const days2 = book==="mix" ? parseDays($("aDays2").value) : null;
+  if(book==="mix" && !okRange(days2,BOOKS.rs)){ err.textContent="Reading Smart Unit 범위는 1~8 사이에서 이어지게 써 주세요. (예: 1~2)"; err.hidden=false; return; }
   if(!names.length){ err.textContent="학생 이름을 한 명 이상 써 주세요."; err.hidden=false; return; }
   if(!$("aClass").value){ err.textContent="반을 선택해 주세요."; err.hidden=false; return; }
   const pass=+$("aPass").value, count=0, sec=+$("aSec").value, cls=$("aClass").value.trim();
-  const first=$("aFirst").value.replace(/\s/g,""); const code=makeKCode(days,pass,sec,book);
+  const first=$("aFirst").value.replace(/\s/g,""); const code= book==="mix" ? makeMixCode(days,days2,pass,sec) : makeKCode(days,pass,sec,book);
   $("aGo").disabled=true;
   try{
-    for(const name of names){ await db.collection("retests").add({name, cls, book, days, pass, count, sec, code, first: names.length===1? first : "", attempts:[], manualPass:false, createdAt:Date.now()}); }
-    const one={name:names.length===1?names[0]:"○○○", cls, book, days, pass, count, sec, code};
+    for(const name of names){ await db.collection("retests").add({name, cls, book, days, ...(days2?{days2}:{}), pass, count, sec, code, first: names.length===1? first : "", attempts:[], manualPass:false, createdAt:Date.now()}); }
+    const one={name:names.length===1?names[0]:"○○○", cls, book, days, days2, pass, count, sec, code};
     $("aMsg").textContent=noticeFor(one); $("aOut").hidden=false; $("aNames").value=""; $("aFirst").value="";
     toast(`${names.length}명 추가했어요`);
   }catch(ex){ err.textContent="저장하지 못했어요. 잠시 뒤 다시 눌러 주세요."; err.hidden=false; }
