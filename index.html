@@ -662,24 +662,24 @@ function attemptsOf(r){ return Array.isArray(r.attempts)? r.attempts : []; }
 function statusOf(r){ if(r.manualPass) return "pass"; const a=attemptsOf(r); if(a.some(x=>x.total && x.score/x.total*100 >= r.pass)) return "pass"; return a.length? "fail":"wait"; }
 const ST={pass:["pass","통과"], fail:["fail","재응시 필요"], wait:["wait","미응시"]};
 function limitText(r){ if(!r.sec) return "시간 제한 없음"; let n=0,rc=0; for(const w of wordsOf(r)){ n++; rc+=w.rel.length; } return `제한 시간 ${fmtTime((n+rc)*r.sec)} (${n}문항${rc?` + 동·반의어 ${rc}칸`:""}, 칸당 ${r.sec}초) · 시간 안에 제출 못 하면 처음부터 다시`; }
-function noticeTitle(cls){ cls=cls||""; if(/E5$/.test(cls)) return "E5 Hermes Voca 복습과제[재시험] 안내"; if(/M1$/.test(cls)) return "M1 Major Voca 복습과제[재시험] 안내"; return "Voca 복습과제[재시험] 안내"; }
+function noticeTitle(cls){ cls=cls||""; if(/E5(·|$)/.test(cls)) return "E5 Hermes Voca 복습과제[재시험] 안내"; if(/M1$/.test(cls)) return "M1 Major Voca 복습과제[재시험] 안내"; return "Voca 복습과제[재시험] 안내"; }
 const FORM_URL="https://docs.google.com/forms/d/e/1FAIpQLSfID1MaBmAQTj6Bku5hzGHnKAdJrctREc9o0UK6hG5Gk86zCg/formResponse";
 const FORM_FIELDS={name:"entry.1036635173", cls:"entry.2039515947", range:"entry.1351378639", code:"entry.4556721", score:"entry.47966202", at:"entry.90218064", vc:"entry.1596331366"};
 const SHEET_ID_DEFAULT="1_VtjdC9I4ZCoj1FRMzDRoQNMmDd12pufcMpR7THtC4s";
 function sheetId(){ return store.get("wm_sheet_id", SHEET_ID_DEFAULT) || SHEET_ID_DEFAULT; }
 const STUDENT_URL_DEFAULT="https://dybdaechi.github.io/DT_Major-Voca/";
 function studentUrl(){ return store.get("wm_student_url", STUDENT_URL_DEFAULT) || STUDENT_URL_DEFAULT; }
-function linkFor(r){ const g=/E5$/.test(r.cls||"")? "E5" : "M1"; return studentUrl()+"?g="+g+"&k="+encodeURIComponent(r.cls||"")+"&c="+encodeURIComponent((r.code||"").replace(/\s/g,"")); }
+function linkFor(r){ const g=/E5(·|$)/.test(r.cls||"")? "E5" : "M1"; return studentUrl()+"?g="+g+"&k="+encodeURIComponent(r.cls||"")+"&c="+encodeURIComponent((r.code||"").replace(/\s/g,"")); }
 function noticeFor(r){ return `[${noticeTitle(r.cls)}]\n${r.name} 학생, 단어 재시험이 있어요.\n범위: ${labelOf(r)} (통과 ${r.pass}% 이상)\n${limitText(r)}\n\n아래 링크를 누르면 바로 시험 화면으로 들어가요. 이름만 쓰고 시작하세요.\n${linkFor(r)}\n\n재시험 코드: ${r.code}\n\n시험이 끝나면 '결과 복사'를 눌러 선생님께 보내 주세요.`; }
 
 function render(){
   const cls=$("fClass").value;
   const ORDER=["월금M1","월수M1","화목M1","월금E5","월수E5","화목E5"];
-  const classes=[...new Set([...ORDER, ...rows.map(r=>r.cls).filter(Boolean)])].sort((a,b)=>(ORDER.indexOf(a)+1||99)-(ORDER.indexOf(b)+1||99)||a.localeCompare(b));
+  const classes=[...new Set([...ORDER, ...rows.flatMap(r=>(r.cls||"").split("·")).filter(Boolean)])].sort((a,b)=>(ORDER.indexOf(a)+1||99)-(ORDER.indexOf(b)+1||99)||a.localeCompare(b));
   const sel=$("fClass"); const cur=sel.value; sel.innerHTML='<option value="">모든 반</option>'+classes.map(c=>`<option></option>`).join("");
   classes.forEach((c,i)=>{ sel.options[i+1].value=c; sel.options[i+1].textContent=c; }); sel.value=classes.includes(cur)?cur:"";
   const dl=$("classList"); dl.innerHTML=""; classes.forEach(c=>{ const o=document.createElement("option"); o.value=c; dl.appendChild(o); });
-  const inCls=rows.filter(r=>!sel.value || r.cls===sel.value);
+  const inCls=rows.filter(r=>!sel.value || (r.cls||"").split("·").includes(sel.value));
   $("stTotal").textContent=inCls.length; $("stPass").textContent=inCls.filter(r=>statusOf(r)==="pass").length; $("stOpen").textContent=inCls.filter(r=>statusOf(r)!=="pass").length;
   const shown=inCls.filter(r=> filt==="all" || (filt==="pass" ? statusOf(r)==="pass" : statusOf(r)!=="pass"));
   const list=$("list"); list.innerHTML="";
@@ -725,6 +725,7 @@ async function addAttempt(r, at){ const a=attemptsOf(r).map(x=>({...x})); a.push
 document.querySelectorAll(".chip[data-f]").forEach(c=>c.onclick=()=>{ filt=c.dataset.f; document.querySelectorAll(".chip[data-f]").forEach(x=>x.setAttribute("aria-pressed",x===c)); render(); });
 $("fClass").onchange=render;
 
+document.querySelectorAll("#aClass .chip").forEach(b=>b.onclick=()=>b.setAttribute("aria-pressed", b.getAttribute("aria-pressed")!=="true"));
 $("aBook").onchange=()=>{ const v=$("aBook").value, rs=v==="rs"; $("aDaysLabel").textContent= rs? "Unit 범위" : v==="mix" ? "Word Master Day 범위" : "Day 범위"; $("aDays").placeholder= rs? "예: 1~2 (Unit 1~8)" : "예: 3~4 (이어진 10일 이내)"; $("aDays2Wrap").hidden = v!=="mix"; };
 $("addForm").addEventListener("submit", async e=>{
   e.preventDefault(); const err=$("aErr"); err.hidden=true; $("aOut").hidden=true;
@@ -735,8 +736,10 @@ $("addForm").addEventListener("submit", async e=>{
   const days2 = book==="mix" ? parseDays($("aDays2").value) : null;
   if(book==="mix" && !okRange(days2,BOOKS.rs)){ err.textContent="Reading Smart Unit 범위는 1~8 사이에서 이어지게 써 주세요. (예: 1~2)"; err.hidden=false; return; }
   if(!names.length){ err.textContent="학생 이름을 한 명 이상 써 주세요."; err.hidden=false; return; }
-  if(!$("aClass").value){ err.textContent="반을 선택해 주세요."; err.hidden=false; return; }
-  const pass=+$("aPass").value, count=0, sec=+$("aSec").value, cls=$("aClass").value.trim();
+  const clsList=[...document.querySelectorAll("#aClass .chip[aria-pressed=true]")].map(b=>b.dataset.cls);
+  if(!clsList.length){ err.textContent="반을 하나 이상 선택해 주세요."; err.hidden=false; return; }
+  if(clsList.some(c=>/E5$/.test(c)) && clsList.some(c=>/M1$/.test(c))){ err.textContent="M1 반과 E5 반은 안내문이 달라서 따로 추가해 주세요."; err.hidden=false; return; }
+  const pass=+$("aPass").value, count=0, sec=+$("aSec").value, cls=clsList.join("·");
   const first=$("aFirst").value.replace(/\s/g,""); const code= book==="mix" ? makeMixCode(days,days2,pass,sec) : makeKCode(days,pass,sec,book);
   $("aGo").disabled=true;
   try{
