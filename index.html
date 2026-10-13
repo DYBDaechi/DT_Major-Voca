@@ -563,7 +563,7 @@ function drawTest(){
   $("tFeedback").hidden=true;
   inputs[0].focus({preventScroll:true});
 }
-const NOSUG = (()=>{ try{ return CSS.supports("-webkit-text-security","none"); }catch(e){ return false; } })();
+const NOSUG = false; // password-style fields made phones offer "save/fill password", so they stay plain text fields
 function saveAns(){ if(T) T.ans[T.i]=[...$("tInputs").querySelectorAll("input")].map(x=>x.value); }
 $("tForm").addEventListener("submit", e=>{
   e.preventDefault();
