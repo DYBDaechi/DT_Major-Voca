@@ -236,14 +236,14 @@ pre.result{white-space:pre-wrap;font-family:var(--f-mono);font-size:13px;backgro
       <div class="progress"><i id="tBar"></i></div>
       <div class="panel">
         <div class="tq" id="tQ"></div>
-        <form id="tForm" class="stack" style="gap:10px">
+        <div id="tForm" class="stack" style="gap:10px">
           <div id="tInputs" class="stack" style="gap:10px"></div>
           <p class="hint" id="tFeedback" hidden></p>
           <div class="row">
             <button type="button" class="btn" style="flex:1" id="tPrev">이전</button>
-            <button type="submit" class="btn primary" style="flex:2" id="tNext">다음</button>
+            <button type="button" class="btn primary" style="flex:2" id="tNext">다음</button>
           </div>
-        </form>
+        </div>
       </div>
       <div id="tConfirm" class="panel" hidden>
         <p style="margin:0" id="tConfirmMsg"></p>
@@ -548,7 +548,7 @@ function drawTest(){
   $("tCount").textContent=`${T.i+1} / ${T.q.length}`; $("tBar").style.width=(T.i/T.q.length*100)+"%";
   $("tQ").textContent=w.ko; $("tPrev").disabled=T.i===0;
   const box=$("tInputs"); box.innerHTML="";
-  const mkInput=(val,ph,cls)=>{ const x=document.createElement("input"); x.className=cls||""; x.value=val; x.placeholder=ph; x.autocomplete="off"; x.setAttribute("autocapitalize","off"); x.setAttribute("autocorrect","off"); x.spellcheck=false; x.name="a"+Math.random().toString(36).slice(2);
+  const mkInput=(val,ph,cls)=>{ const x=document.createElement("input"); x.className=cls||""; x.value=val; x.placeholder=ph; x.autocomplete="off"; x.setAttribute("autocapitalize","off"); x.setAttribute("autocorrect","off"); x.spellcheck=false; x.setAttribute("autocomplete","wm-ans-"+Math.random().toString(36).slice(2)); x.removeAttribute("name"); x.setAttribute("data-form-type","other"); x.setAttribute("enterkeyhint", "next");
     // Keyboards hide word suggestions for password fields; keep the letters visible where the browser allows it
     if(NOSUG){ x.type="password"; x.autocomplete="new-password"; x.setAttribute("data-lpignore","true"); x.setAttribute("data-1p-ignore",""); x.classList.add("nosug"); }
     return x; };
@@ -558,22 +558,22 @@ function drawTest(){
     const ko=document.createElement("span"); ko.className="relko"; ko.textContent=r[1]||"뜻 없이 단어만 쓰세요";
     const inp=mkInput(T.ans[T.i][k+1], RELNAME[r[0]]+" 입력"); inputs.push(inp);
     row.append(tag,ko,inp); box.appendChild(row); });
-  inputs.forEach((inp,k)=>inp.addEventListener("keydown",e=>{ if(e.key==="Enter" && k<inputs.length-1){ e.preventDefault(); inputs[k+1].focus(); } }));
+  inputs.forEach((inp,k)=>inp.addEventListener("keydown",e=>{ if(e.key!=="Enter" || e.isComposing) return; e.preventDefault(); if(k<inputs.length-1) inputs[k+1].focus(); else submitAnswer(); }));
   $("tNext").textContent = T.i===T.q.length-1 ? "제출" : "다음";
   $("tFeedback").hidden=true;
   inputs[0].focus({preventScroll:true});
 }
 const NOSUG = false; // password-style fields made phones offer "save/fill password", so they stay plain text fields
 function saveAns(){ if(T) T.ans[T.i]=[...$("tInputs").querySelectorAll("input")].map(x=>x.value); }
-$("tForm").addEventListener("submit", e=>{
-  e.preventDefault();
+const submitAnswer = e=>{
   saveAns();
   if(!T.official){ // practice: instant feedback
     const w=T.q[T.i]; const fb=$("tFeedback");
     if(fb.hidden){ const ok=isRight(w,T.ans[T.i]); fb.hidden=false; fb.className= ok?"ok":"err"; fb.textContent= ok ? "정답!" : `정답: ${ansStr(w)}`; if(ok){ setTimeout(()=>advance(),350); } return; }
   }
   advance();
-});
+};
+$("tNext").addEventListener("click", submitAnswer);
 function advance(){
   if(T.i < T.q.length-1){ T.i++; drawTest(); return; }
   const blanks=T.ans.filter(a=>a.some(x=>!x.trim())).length;
