@@ -719,7 +719,24 @@ function itemEl(r){
     ps.onclick=async()=>{ try{ await db.doc("retests/"+r.id).update({manualPass:!r.manualPass}); }catch(e){ toast("저장하지 못했어요. 다시 시도해 주세요"); } };
     const del=document.createElement("button"); del.className="btn small danger"; del.type="button"; del.textContent="삭제";
     del.onclick=async()=>{ if(del.dataset.arm!=="1"){ del.dataset.arm="1"; del.textContent="한 번 더 누르면 삭제"; setTimeout(()=>{ del.dataset.arm=""; del.textContent="삭제"; },3000); return; } try{ await db.doc("retests/"+r.id).delete(); openId=null; toast("삭제했어요"); }catch(e){ toast("삭제하지 못했어요"); } };
-    b.append(cp,ps,del); d.appendChild(b);
+    const ed=document.createElement("button"); ed.className="btn small"; ed.type="button"; ed.textContent="이름·반 수정";
+    b.append(cp,ps,ed,del); d.appendChild(b);
+    const box=document.createElement("div"); box.className="stack"; box.style.gap="8px"; box.hidden=true;
+    const nIn=document.createElement("input"); nIn.id="edn-"+r.id; nIn.value=r.name; nIn.placeholder="학생 이름";
+    const chipsRow=document.createElement("div"); chipsRow.className="filters";
+    const cur=new Set((r.cls||"").split("·").filter(Boolean));
+    ["월금M1","월수M1","화목M1","월금E5","월수E5","화목E5"].forEach(c=>{ const ch=document.createElement("button"); ch.type="button"; ch.className="chip"; ch.textContent=c; ch.dataset.cls=c; ch.setAttribute("aria-pressed",cur.has(c)); ch.onclick=()=>ch.setAttribute("aria-pressed", ch.getAttribute("aria-pressed")!=="true"); chipsRow.appendChild(ch); });
+    const sv2=document.createElement("button"); sv2.className="btn small primary"; sv2.type="button"; sv2.textContent="저장";
+    const note=document.createElement("p"); note.className="hint"; note.style.margin="0"; note.textContent="이름을 바꾸면 학생도 시험 볼 때 바뀐 이름으로 써야 결과가 기록돼요.";
+    sv2.onclick=async()=>{
+      const name=nIn.value.trim(); const list=[...chipsRow.querySelectorAll(".chip[aria-pressed=true]")].map(x=>x.dataset.cls);
+      if(!name){ toast("이름을 써 주세요"); return; }
+      if(!list.length){ toast("반을 하나 이상 골라 주세요"); return; }
+      if(list.some(c=>/E5$/.test(c)) && list.some(c=>/M1$/.test(c))){ toast("M1 반과 E5 반은 같이 고를 수 없어요"); return; }
+      try{ await db.doc("retests/"+r.id).update({name, cls:list.join("·")}); toast("수정했어요"); }catch(e){ toast("저장하지 못했어요. 다시 눌러 주세요"); }
+    };
+    box.append(nIn, chipsRow, note, sv2); d.appendChild(box);
+    ed.onclick=()=>{ box.hidden=!box.hidden; if(!box.hidden) nIn.focus(); };
     el.appendChild(d);
   }
   return el;
