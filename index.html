@@ -675,7 +675,8 @@ function sheetId(){ return store.get("wm_sheet_id", SHEET_ID_DEFAULT) || SHEET_I
 const STUDENT_URL_DEFAULT="https://dybdaechi.github.io/DT_Major-Voca/";
 function studentUrl(){ return store.get("wm_student_url", STUDENT_URL_DEFAULT) || STUDENT_URL_DEFAULT; }
 function linkFor(r){ const g=/E5(·|$)/.test(r.cls||"")? "E5" : "M1"; return studentUrl()+"?g="+g+"&k="+encodeURIComponent(r.cls||"")+"&c="+encodeURIComponent((r.code||"").replace(/\s/g,"")); }
-function noticeFor(r){ return `[${noticeTitle(r.cls)}]\n${r.name} 학생, 단어 재시험이 있어요.\n범위: ${labelOf(r)} (통과 ${r.pass}% 이상)\n${limitText(r)}\n\n아래 링크를 누르면 바로 시험 화면으로 들어가요. 이름만 쓰고 시작하세요.\n${linkFor(r)}\n\n재시험 코드: ${r.code}\n\n시험이 끝나면 '결과 복사'를 눌러 선생님께 보내 주세요.`; }
+function todayDow(){ return ["일","월","화","수","목","금","토"][new Date().getDay()]+"요일"; }
+function noticeFor(r){ return `[${noticeTitle(r.cls)}]\n${r.name} 학생, ${todayDow()} 단어 재시입니다.\n\n범위: ${labelOf(r)} (통과 ${r.pass}% 이상)\n${limitText(r)}\n\n아래 링크를 누르면 바로 시험 화면으로 들어가요. 이름만 쓰고 시작하세요.\n${linkFor(r)}\n\n재시험 코드: ${r.code}\n\n시험이 끝나면 '결과 복사'를 눌러 선생님께 보내 주세요.`; }
 
 function render(){
   const cls=$("fClass").value;
@@ -766,7 +767,7 @@ $("addForm").addEventListener("submit", async e=>{
   $("aGo").disabled=true;
   try{
     for(const name of names){ await db.collection("retests").add({name, cls, book, days, ...(days2?{days2}:{}), pass, count, sec, code, first: names.length===1? first : "", attempts:[], manualPass:false, createdAt:Date.now()}); }
-    const one={name:names.length===1?names[0]:"○○○", cls, book, days, days2, pass, count, sec, code};
+    const one={name:names.length===1?names[0]:"[name]", cls, book, days, days2, pass, count, sec, code};
     $("aMsg").textContent=noticeFor(one); $("aOut").hidden=false; $("aNames").value=""; $("aFirst").value="";
     toast(`${names.length}명 추가했어요`);
   }catch(ex){ err.textContent="저장하지 못했어요. 잠시 뒤 다시 눌러 주세요."; err.hidden=false; }
