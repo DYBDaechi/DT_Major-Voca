@@ -720,6 +720,24 @@ function itemEl(r){
     ps.onclick=async()=>{ try{ await db.doc("retests/"+r.id).update({manualPass:!r.manualPass}); }catch(e){ toast("저장하지 못했어요. 다시 시도해 주세요"); } };
     const del=document.createElement("button"); del.className="btn small danger"; del.type="button"; del.textContent="삭제";
     del.onclick=async()=>{ if(del.dataset.arm!=="1"){ del.dataset.arm="1"; del.textContent="한 번 더 누르면 삭제"; setTimeout(()=>{ del.dataset.arm=""; del.textContent="삭제"; },3000); return; } try{ await db.doc("retests/"+r.id).delete(); openId=null; toast("삭제했어요"); }catch(e){ toast("삭제하지 못했어요"); } };
+    // per-student time limit (for slow typists): new code for this student only
+    const tRow=document.createElement("div"); tRow.className="row";
+    const tLab=document.createElement("span"); tLab.className="hint"; tLab.textContent="이 학생 시간 제한";
+    const tSel=document.createElement("select"); tSel.id="sec-"+r.id; tSel.style.width="auto";
+    [[0,"제한 없음"],[5,"칸당 5초"],[8,"칸당 8초"],[10,"칸당 10초"],[15,"칸당 15초"]].forEach(([v,t])=>{ const o=document.createElement("option"); o.value=v; o.textContent=t; if((r.sec||0)===v) o.selected=true; tSel.appendChild(o); });
+    const tGo=document.createElement("button"); tGo.className="btn small"; tGo.type="button"; tGo.textContent="시간 바꾸기";
+    tGo.onclick=async()=>{
+      const sec=+tSel.value; if(sec===(r.sec||0)){ toast("지금과 같은 시간이에요"); return; }
+      const code = r.book==="mix" ? makeMixCode(r.days, r.days2||[], r.pass, sec) : makeKCode(r.days, r.pass, sec, r.book||"wm");
+      if(!code){ toast("이 재시험은 시간을 바꿀 수 없어요. 새로 추가해 주세요"); return; }
+      const oldCodes=[...new Set([...(r.oldCodes||[]), r.code])];
+      try{
+        await db.doc("retests/"+r.id).update({sec, code, oldCodes});
+        copyText(noticeFor({...r, sec, code}));
+        toast("바꿨어요. 새 안내문을 복사했으니 이 학생에게만 보내 주세요");
+      }catch(e){ toast("저장하지 못했어요. 다시 눌러 주세요"); }
+    };
+    tRow.append(tLab, tSel, tGo); d.appendChild(tRow);
     const ed=document.createElement("button"); ed.className="btn small"; ed.type="button"; ed.textContent="이름·반 수정";
     b.append(cp,ps,ed,del); d.appendChild(b);
     const box=document.createElement("div"); box.className="stack"; box.style.gap="8px"; box.hidden=true;
@@ -786,7 +804,7 @@ async function recordResult(x, src, quiet){
   const {name, code, at, vc} = x; const right=+x.right, total=+x.total;
   if(!name||!code||!total||!at||!vc) return ["err",`${name||"이름 없음"}: 결과 일부가 빠져 있어요.`,false];
   if(hash([name,code,right,total,at].join("|"),5)!==vc) return ["err",`${name}: 확인 코드가 맞지 않아요. 내용이 바뀐 결과일 수 있어요.`,false];
-  const r = rows.filter(r=>r.name===name && r.code===code).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+  const r = rows.filter(r=>r.name===name && (r.code===code || (r.oldCodes||[]).includes(code))).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
   if(!r) return ["err",`${name} (${code}): 이 이름과 코드로 등록된 재시험이 없어요. 이름이 명단과 같은지 확인해 주세요.`,false];
   if(attemptsOf(r).some(a=>a.vc===vc)) return ["hint",`${name}: 이미 기록된 결과예요.`,false];
   const a=attemptsOf(r).map(y=>({...y})); a.push({score:right,total,at,vc,src});
